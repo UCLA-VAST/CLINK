@@ -1,4 +1,4 @@
-# CLINK-on-FPGA
+# CLINK
 Compact LSTM inference kernel (CLINK) designed in C/HLS for FPGA implementation.
 
 ## Brief Description
