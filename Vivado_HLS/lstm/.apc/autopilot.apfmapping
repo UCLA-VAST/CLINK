@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<autopilotfilemapping:AutoPilotFileMapping xmlns:autopilotfilemapping="www.autoesl.com/autopilotfilemapping">
+  <source>
+    <originFiles name="lstm_n5_16s_16b.c" path="E:\170429_LFP_PhaseDetect\2.Design\LSTM_IP_EVA_F1\hls_lstm_n5_16s_16b\lstm_n5_16s_16b.c"/>
+  </source>
+  <testbench/>
+</autopilotfilemapping:AutoPilotFileMapping>

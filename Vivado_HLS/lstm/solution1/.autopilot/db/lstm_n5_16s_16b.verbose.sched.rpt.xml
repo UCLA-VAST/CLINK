@@ -1,0 +1,54 @@
+<profile>
+
+<section name = "Vivado HLS Report for 'lstm_n5_16s_16b'" level="0">
+<item name = "Date">Mon Dec 18 16:04:33 2017
+</item>
+<item name = "Version">2017.3 (Build 2018833 on Wed Oct 04 20:30:40 MDT 2017)</item>
+<item name = "Project">lstm</item>
+<item name = "Solution">solution1</item>
+<item name = "Product family">virtexuplus</item>
+<item name = "Target device">xcvu9p-flga2104-2L-e-es1</item>
+</section>
+
+<section name = "Performance Estimates" level="0">
+<item name = "Timing (ns)">
+<section name = "" level="1">
+<item name = "Summary"><table name="" hasTotal="0">
+<keys size="4">Clock, Target, Estimated, Uncertainty</keys>
+<column name="ap_clk">10.00, 6.43, 1.25</column>
+</table>
+</item>
+</section>
+</item>
+<item name = "Latency (clock cycles)">
+<section name = "" level="1">
+<item name = "Summary"><table name="" hasTotal="0">
+<keys size="6">, min, max, min, max, Type</keys>
+<column name="">185, 185, 186, 186, none</column>
+</table>
+</item>
+<item name = "Detail">
+<section name = "" level="1">
+<item name = "Instance"><table name="" hasTotal="0">
+<keys size="7">Instance, Module, min, max, min, max, Type</keys>
+</table>
+</item>
+<item name = "Loop"><table name="" hasTotal="0">
+<keys size="8">Loop Name, min, max, Latency, achieved, target, Count, Pipelined</keys>
+<column name="- memset_i_state">4, 4, 1, -, -, 5, no</column>
+<column name="- memset_f_state">4, 4, 1, -, -, 5, no</column>
+<column name="- memset_o_state">4, 4, 1, -, -, 5, no</column>
+<column name="- memset_g_state">4, 4, 1, -, -, 5, no</column>
+<column name="- Loop 5">20, 20, 5, 4, 1, 5, yes</column>
+<column name="- Loop 6">100, 100, 5, 4, 1, 25, yes</column>
+<column name="- Loop 7">22, 22, 7, 4, 1, 5, yes</column>
+<column name="- Loop 8">6, 6, 3, 1, 1, 5, yes</column>
+<column name="- Loop 9">6, 6, 2, 1, 1, 5, yes</column>
+</table>
+</item>
+</section>
+</item>
+</section>
+</item>
+</section>
+</profile>

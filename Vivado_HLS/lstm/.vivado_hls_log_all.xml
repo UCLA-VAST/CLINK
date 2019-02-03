@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vivadoHLSLog:LogRoot xmlns:vivadoHLSLog="www.xilinx.com/vivadoHLSLog">
+  <errorLogs>
+    <logs>
+      <synLog/>
+      <simLog/>
+      <mgLog/>
+      <packageLog>
+        <logs message="ERROR: [Coretcl 2-106] Specified part could not be found.&#xD;&#xA;" projectName="lstm" solutionName="solution1" date="2017-12-18T16:05:26.784-0800"/>
+      </packageLog>
+      <csimLog/>
+    </logs>
+  </errorLogs>
+  <warningLogs>
+    <logs>
+      <synLog>
+        <logs message="WARNING: [RTGEN 206-101] Setting dangling out port 'lstm_n5_16s_16b/weight_Din_A' to 0." projectName="lstm" solutionName="solution1" date="2017-12-18T16:04:34.821-0800" type="Warning"/>
+        <logs message="WARNING: [RTGEN 206-101] Setting dangling out port 'lstm_n5_16s_16b/weight_WEN_A' to 0." projectName="lstm" solutionName="solution1" date="2017-12-18T16:04:34.785-0800" type="Warning"/>
+        <logs message="WARNING: [SCHED 204-69] Unable to schedule 'load' operation ('weight_load_10', lstm_n5_16s_16b.c:324) on array 'weight' due to limited memory ports. Please consider using a memory core with more ports or partitioning the array 'weight'." projectName="lstm" solutionName="solution1" date="2017-12-18T16:04:33.442-0800" type="Warning"/>
+        <logs message="WARNING: [SCHED 204-69] Unable to schedule 'load' operation ('weight_load_7', lstm_n5_16s_16b.c:306) on array 'weight' due to limited memory ports. Please consider using a memory core with more ports or partitioning the array 'weight'." projectName="lstm" solutionName="solution1" date="2017-12-18T16:04:33.419-0800" type="Warning"/>
+        <logs message="WARNING: [SCHED 204-68] Unable to enforce a carried dependence constraint (II = 1, distance = 1, offset = 1)&#xD;&#xA;   between 'store' operation (lstm_n5_16s_16b.c:305) of variable 'tmp_59', lstm_n5_16s_16b.c:305 on array 'f_state', lstm_n5_16s_16b.c:280 and 'load' operation ('f_state_load', lstm_n5_16s_16b.c:305) on array 'f_state', lstm_n5_16s_16b.c:280." projectName="lstm" solutionName="solution1" date="2017-12-18T16:04:33.408-0800" type="Warning"/>
+        <logs message="WARNING: [SCHED 204-69] Unable to schedule 'load' operation ('weight_load_1', lstm_n5_16s_16b.c:296) on array 'weight' due to limited memory ports. Please consider using a memory core with more ports or partitioning the array 'weight'." projectName="lstm" solutionName="solution1" date="2017-12-18T16:04:33.366-0800" type="Warning"/>
+      </synLog>
+      <simLog/>
+      <mgLog/>
+      <packageLog/>
+      <csimLog/>
+    </logs>
+  </warningLogs>
+</vivadoHLSLog:LogRoot>
