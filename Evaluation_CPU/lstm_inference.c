@@ -3,7 +3,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define SAMPLE_TEST_LEN 2048
+#define SAMPLE_TEST_LEN 1
 #define SCALER 4096
 #define LUT_SIZE 1024
 
@@ -328,7 +328,6 @@ void lstm_n5_o1(
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 5; ++j) {
             inWF[i][j] = (short) (inW[i][j] * SCALER);
-            //printf("%d\n", inWF[i][j]);
         }
     }
 
@@ -336,7 +335,6 @@ void lstm_n5_o1(
         for (j = 0; j < 5; ++j) {
             for (t = 0; t < 5; ++t) {
                 intWF[i][j][t] = (short) (intW[i][j][t] * SCALER);
-                //printf("%d\n", intWF[i][j][t]);
             }
         }
     }
@@ -344,17 +342,14 @@ void lstm_n5_o1(
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 5; ++j) {
             intBF[i][j] = (short) (intB[i][j] * SCALER);
-            //printf("%d\n", intBF[i][j]);
         }
     }
 
     for (i = 0; i < 5; ++i) {
         outWF[i] = (short) (outW[i] * SCALER);
-        //printf("%d\n", outWF[i]);
     }
 
     outBF = (short) (outB * SCALER);
-    //printf("%d\n", outBF);
 
     short h_stateF[5] = {0};
     short c_stateF[5] = {0};
@@ -516,7 +511,6 @@ void lstm_n5_o2(
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 5; ++j) {
             inWF[i][j] = (short) (inW[i][j] * SCALER);
-            //printf("%d\n", inWF[i][j]);
         }
     }
 
@@ -524,7 +518,6 @@ void lstm_n5_o2(
         for (j = 0; j < 5; ++j) {
             for (t = 0; t < 5; ++t) {
                 intWF[i][j][t] = (short) (intW[i][j][t] * SCALER);
-                //printf("%d\n", intWF[i][j][t]);
             }
         }
     }
@@ -532,17 +525,14 @@ void lstm_n5_o2(
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 5; ++j) {
             intBF[i][j] = (short) (intB[i][j] * SCALER);
-            //printf("%d\n", intBF[i][j]);
         }
     }
 
     for (i = 0; i < 5; ++i) {
         outWF[i] = (short) (outW[i] * SCALER);
-        //printf("%d\n", outWF[i]);
     }
 
     outBF = (short) (outB * SCALER);
-    //printf("%d\n", outBF);
 
     short h_stateF[5] = {0};
     short c_stateF[5] = {0};
@@ -645,7 +635,7 @@ void lstm_n5_o2(
 
 int main() {
 
-    int i;
+    int i, j;
     FILE *ifp, *ofp;
 
     struct timeval t1, t2, tr;
@@ -653,6 +643,8 @@ int main() {
     int sampleinput[SAMPLE_TEST_LEN];
     short test_out1[SAMPLE_TEST_LEN];
     short test_out2[SAMPLE_TEST_LEN];
+    short test_out3[SAMPLE_TEST_LEN];
+    short test_out4[SAMPLE_TEST_LEN];
 
     // Read in sample input from "converted-lstm-in.txt" file
     if (!(ifp = fopen("converted-lstm-in.txt", "r"))) {
@@ -672,10 +664,20 @@ int main() {
     }
 
     gettimeofday(&t1, NULL);
-    for (i = 0; i < 50000; ++i) {
-        lstm_n5_o1(sampleinput, test_out1);
-        lstm_n5_o2(sampleinput, test_out2);
+
+    #pragma omp parallel num_threads(16) 
+    {
+        #pragma omp for
+        for (j = 0; j < 100000; ++j)
+        {
+            for (i = 0; i < 24; ++i) {
+                lstm_n5_o1(sampleinput, test_out1);
+                lstm_n5_o2(sampleinput, test_out2);
+            }
+        }
+
     }
+
     gettimeofday(&t2, NULL);
     timersub(&t1, &t2, &tr);
     printf("Execute time: %.2f sec\n", -tr.tv_sec-(double)tr.tv_usec/1000000.0);
