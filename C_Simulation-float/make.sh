@@ -1,1 +1,1 @@
-gcc -o lstm -g prune_lstm_weight.c -lm
+gcc -o lstm -g lstm_inference.c -lm

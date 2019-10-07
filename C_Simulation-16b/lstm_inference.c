@@ -3,7 +3,7 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define SAMPLE_TEST_LEN 2048
+#define SAMPLE_TEST_LEN 20000
 #define SCALER 4096
 #define LUT_SIZE 1024
 
@@ -267,353 +267,109 @@ short lut_tanh[LUT_SIZE] = {
     4096,4096,4096,4096,4096,4096,4096,4096,
     4096,4096,4096,4096,4096,4096,4096,4096};
 
-void lstm_n5_o1(
-    int input[SAMPLE_TEST_LEN],
+void lstm_n5(
+    short input[SAMPLE_TEST_LEN],
+    int inW[4][5],
+    int intW[4][5][5],
+    int intB[4][5],
+    int outW[5],
+    int outB,
     short output[SAMPLE_TEST_LEN])
 {
     int i, j, t;
 
-    float inW[4][5] = {
-        -0.00902497, 0.0130347, -0.305604, 0.0103134, -0.00143173,
-        -0.00892103, -0.00877193, -0.0158959, -0.00261989, 0.00238156,
-        -1.17159, -1.05888, -0.0252563, 1.32337, 0.896013,
-        0.112793, 0.107382, 0.459561, 0.112837, -0.0858938};
-
-    float intW[4][5][5] = {
-        {{0.01465, 0.017885, 0.00462623, -0.00366126, 0.00414583}, 
-        {0.00709106, 0.00612325, 0.00509018, 0.00629193, -0.00820282},
-        {0.0594903, 0.0594652, 0.0879106, -0.202968, 0.146663},
-        {0.0173266, -0.00258213, -0.00156304, -0.0161799, 0.0206139}, 
-        {0.00378391, 0.0190192, 0.0140174, 0.0183843, -0.00042357}}, 
-        {{-0.007224, -2.52633e-05, -0.00375626, 0.0171819, -0.0146835}, 
-        {0.0095475, 0.0111485, 0.00723207, -0.00279432, -0.00130744}, 
-        {-0.00358937, -0.0211212, -0.0445563, -0.0203464, 0.0123881},
-        {-0.00648264, -0.00841806, 0.00112013, 0.00435087, -0.0138258}, 
-        {0.00533612, -0.00909088, 0.00789575, 0.00117046, 0.00834566}}, 
-        {{0.74772, 0.635634, 0.730541, -1.11435, 0.814002}, 
-        {0.623608, 0.53032, 0.652992, -1.01461, 0.768323},
-        {0.120079, 0.113368, 0.0824013, -0.000308211, -0.0182162},
-        {-1.28265, -1.18123, -0.480213, 0.984297, -0.576107}, 
-        {-1.00799, -0.944089, -0.355751, 0.536079, -0.27723}},
-        {{0.0134795, 0.0447042, 0.015088, 0.0920375, -0.0777375}, 
-        {0.0384587, 0.0330071, 0.0205698, 0.0858556, -0.0671409}, 
-        {-0.63912, -0.570696, -0.0891825, 0.706698, -0.5}, 
-        {0.0172945, 0.0240723, 0.00149645, 0.0341813, -0.0418003}, 
-        {-0.0122831, -0.0280598, -0.00341253, -0.0265756, 0.0246845}}
-    }; 
-
-    float intB[4][5] = {
-        0.016, 0.0139732, -0.183891, 0.0139634, 0.00864378,
-        5.00094, 5.00059, 4.97023, 5.0002, 5.00032,
-        0.0676543, -0.0445895, 0.248995, -0.978814, -1.0258,
-        0.204404, 0.190113, -0.156202, 0.219446, -0.179526}; 
-
-    float outW[5] = {-0.4272, -0.33769, 0.167592, 0.50495, -0.502329};
-
-    float outB = -0.0394433;
-
-    short inWF[4][5] = {0};
-    short intWF[4][5][5] = {0};
-    short intBF[4][5] = {0};
-    short outWF[5] = {0};
-    short outBF = 0;
-
-    for (i = 0; i < 4; ++i) {
-        for (j = 0; j < 5; ++j) {
-            inWF[i][j] = (short) (inW[i][j] * SCALER);
-        }
-    }
-
-    for (i = 0; i < 4; ++i) {
-        for (j = 0; j < 5; ++j) {
-            for (t = 0; t < 5; ++t) {
-                intWF[i][j][t] = (short) (intW[i][j][t] * SCALER);
-            }
-        }
-    }
-
-    for (i = 0; i < 4; ++i) {
-        for (j = 0; j < 5; ++j) {
-            intBF[i][j] = (short) (intB[i][j] * SCALER);
-        }
-    }
-
-    for (i = 0; i < 5; ++i) {
-        outWF[i] = (short) (outW[i] * SCALER);
-    }
-
-    outBF = (short) (outB * SCALER);
-
-    short h_stateF[5] = {0};
-    short c_stateF[5] = {0};
-    short i_stateF[5] = {0};
-    short f_stateF[5] = {0};
-    short o_stateF[5] = {0};
-    short g_stateF[5] = {0};
-
-    short sampleinput_16b;
+    short h_state[5] = {0};
+    int c_state[5] = {0};
+    int i_state[5] = {0};
+    int f_state[5] = {0};
+    int o_state[5] = {0};
+    int g_state[5] = {0};
 
     for (t = 0; t < SAMPLE_TEST_LEN; ++t) {
 
-        sampleinput_16b = (short) (input[t] + 120000) * 256 / 1875;
-
         for (j = 0; j < 5; ++j) {
-            i_stateF[j] = (inWF[0][j] * sampleinput_16b) >> 15;
+            i_state[j] = (inW[0][j] * input[t]) >> 15;
             for (i = 0; i < 5; ++i)
-                i_stateF[j] += ((h_stateF[i] * intWF[0][j][i]) >> 12);
-            i_stateF[j] += intBF[0][j];
-            i_stateF[j] = i_stateF[j] >> 5;
-            if (i_stateF[j] >= LUT_SIZE)
-                i_stateF[j] = 4095;
-            else if (i_stateF[j] >= 0)
-                i_stateF[j] = lut_sigmoid[i_stateF[j]];
-            else if (i_stateF[j] > -LUT_SIZE)
-                i_stateF[j] = 4096 - lut_sigmoid[-i_stateF[j]];
+                i_state[j] += ((h_state[i] * intW[0][j][i]) >> 12);
+            i_state[j] += intB[0][j];
+            i_state[j] = i_state[j] >> 5;
+            if (i_state[j] >= LUT_SIZE)
+                i_state[j] = 4096;
+            else if (i_state[j] >= 0)
+                i_state[j] = lut_sigmoid[i_state[j]];
+            else if (i_state[j] > -LUT_SIZE)
+                i_state[j] = 4096 - lut_sigmoid[-i_state[j]];
             else
-                i_stateF[j] = 1;
+                i_state[j] = 0;
         }
 
         for (j = 0; j < 5; ++j) {
-            f_stateF[j] = (inWF[1][j] * sampleinput_16b) >> 15;
+            f_state[j] = (inW[1][j] * input[t]) >> 15;
             for (i = 0; i < 5; ++i)
-                f_stateF[j] += ((h_stateF[i] * intWF[1][j][i]) >> 12);
-            f_stateF[j] += intBF[1][j];
-            f_stateF[j] = f_stateF[j] >> 5;
-            if (f_stateF[j] >= LUT_SIZE)
-                f_stateF[j] = 4095;
-            else if (f_stateF[j] >= 0)
-                f_stateF[j] = lut_sigmoid[f_stateF[j]];
-            else if (f_stateF[j] > -LUT_SIZE)
-                f_stateF[j] = 4096 - lut_sigmoid[-f_stateF[j]];
+                f_state[j] += ((h_state[i] * intW[1][j][i]) >> 12);
+            f_state[j] += intB[1][j];
+            f_state[j] = f_state[j] >> 5;
+            if (f_state[j] >= LUT_SIZE)
+                f_state[j] = 4096;
+            else if (f_state[j] >= 0)
+                f_state[j] = lut_sigmoid[f_state[j]];
+            else if (f_state[j] > -LUT_SIZE)
+                f_state[j] = 4096 - lut_sigmoid[-f_state[j]];
             else
-                f_stateF[j] = 1;
+                f_state[j] = 0;
         }
 
         for (j = 0; j < 5; ++j) {
-            o_stateF[j] = (inWF[2][j] * sampleinput_16b) >> 15;
+            o_state[j] = (inW[2][j] * input[t]) >> 15;
             for (i = 0; i < 5; ++i)
-                o_stateF[j] += ((h_stateF[i] * intWF[2][j][i]) >> 12);
-            o_stateF[j] += intBF[2][j];
-            o_stateF[j] = o_stateF[j] >> 5;
-            if (o_stateF[j] >= LUT_SIZE)
-                o_stateF[j] = 4095;
-            else if (o_stateF[j] >= 0)
-                o_stateF[j] = lut_sigmoid[o_stateF[j]];
-            else if (o_stateF[j] > -LUT_SIZE)
-                o_stateF[j] = 4096 - lut_sigmoid[-o_stateF[j]];
+                o_state[j] += ((h_state[i] * intW[2][j][i]) >> 12);
+            o_state[j] += intB[2][j];
+            o_state[j] = o_state[j] >> 5;
+            if (o_state[j] >= LUT_SIZE)
+                o_state[j] = 4096;
+            else if (o_state[j] >= 0)
+                o_state[j] = lut_sigmoid[o_state[j]];
+            else if (o_state[j] > -LUT_SIZE)
+                o_state[j] = 4096 - lut_sigmoid[-o_state[j]];
             else
-                o_stateF[j] = 1;
+                o_state[j] = 0;
         }
 
         for (j = 0; j < 5; ++j) {
-            g_stateF[j] = (inWF[3][j] * sampleinput_16b) >> 15;
-            for (i = 0; i < 5; ++i)
-                g_stateF[j] += ((h_stateF[i] * intWF[3][j][i]) >> 12);
-            g_stateF[j] += intBF[3][j];
-            g_stateF[j] = g_stateF[j] >> 5;
-            if (g_stateF[j] >= LUT_SIZE)
-                g_stateF[j] = 4096;
-            else if (g_stateF[j] >= 0)
-                g_stateF[j] = lut_tanh[g_stateF[j]];
-            else if (g_stateF[j] > -LUT_SIZE)
-                g_stateF[j] = -lut_tanh[-g_stateF[j]];
-            else
-                g_stateF[j] = -4096;
-        }
-        
-        for (j = 0; j < 5; ++j) {
-            c_stateF[j] = (((c_stateF[j] * f_stateF[j]) >> 8) + ((g_stateF[j] * i_stateF[j]) >> 12)) >> 4;
-            h_stateF[j] = c_stateF[j] >> 1;
-            if (h_stateF[j] >= LUT_SIZE)
-                h_stateF[j] = 4096;
-            else if (h_stateF[j] >= 0)
-                h_stateF[j] = lut_tanh[h_stateF[j]];
-            else if (h_stateF[j] > -LUT_SIZE)
-                h_stateF[j] = -lut_tanh[-h_stateF[j]];
-            else
-                h_stateF[j] = -4096;
-            h_stateF[j] = (h_stateF[j] * o_stateF[j]) >> 12;
-        }
-
-        output[t] = outBF;
-        for (j = 0; j < 5; ++j)
-            output[t] += ((h_stateF[j] * outWF[j]) >> 12);
-    }
-
-    return;
-}
-
-void lstm_n5_o2(
-    int input[SAMPLE_TEST_LEN],
-    short output[SAMPLE_TEST_LEN])
-{
-    int i, j, t;
-
-    float inW[4][5] = {
-        -0.133907, 0.0967799, -0.0249856, -0.0482016, 0.000138663,
-        -0.0025821, -0.0107074, -0.0135626, -0.0265616, -0.00990482,
-        0.0279149, 0.29944, 0.00367669, -0.0406378, -0.122106,
-        0.305937, -1.54966, 0.108542, -0.086096, -0.278674};
-
-    float intW[4][5][5] = {
-        {{0.0465599, -0.0784586, 0.0703757, -0.0961503, 0.103885}, 
-        {0.137839, 0.0785531, 0.172321, 0.00198996, 0.115174}, 
-        {0.0896546, -0.00207286, 0.0280649, 0.0300854, 0.0549556},
-        {0.0952124, 0.011873, 0.0253059, -0.00619738, 0.10025},
-        {-0.0796523, -0.0310471, 0.0336561, -0.0999846, -0.00944991}}, 
-        {{-0.00558139, -0.0249531, -0.0196812, -0.0283953, -0.00538974}, 
-        {0.0124158, 0.00739093, 0.00918819, -0.00951965, 0.00634635}, 
-        {-0.008908, 0.0113348, -0.00387874, 0.00339979, -0.000628876}, 
-        {-0.00832763, 0.0040069, 0.00346749, -0.0256792, 0.00539768},
-        {0.00337389, -0.0148225, -0.0283464, 0.00277652, 0.000571859}}, 
-        {{-0.00736941, 0.0578041, 0.141176, 0.00565979, -0.079775},
-        {-0.140356, 0.0521767, 0.0813636, -0.0342324, -0.0847605},
-        {0.0534741, 0.0335436, 0.0464466, 0.0670157, 0.0266309},
-        {0.0142565, -0.0397183, -0.0116136, -0.0507669, 0.0575363},
-        {-0.0518841, 0.0358612, 0.0333015, -0.119254, 0.0368938}}, 
-        {{-0.40111, 1.17447, 0.172804, 0.197255, 0.0786499}, 
-        {-0.307048, -0.923395, -0.362905, 0.194527, -0.438387},
-        {-0.671133, 0.728081, -0.520196, 0.0108215, -0.139992}, 
-        {-0.600645, 0.151967, 0.0101909, -0.235608, -0.367466},
-        {0.262652, 0.84919, -0.131239, 0.0756875, -0.261777}} 
-    };
-
-    float intB[4][5] = {
-        -0.0421559, 0.246112, 0.0348797, -0.0619016, 0.0988568,
-        4.98184, 4.97131, 4.98673, 4.97446, 4.96925,
-        0.255813, 0.527195, 0.120779, -0.0979445, 0.02733,
-        0.0091722, 0.551458, -0.0521645, 0.0113755, 0.2287}; 
-
-    float outW[5] = {-0.592906, 0.576557, -0.38704, 0.0146919, -0.35076};
-
-    float outB = -0.0191289;
-
-    short inWF[4][5] = {0};
-    short intWF[4][5][5] = {0};
-    short intBF[4][5] = {0};
-    short outWF[5] = {0};
-    short outBF = 0;
-
-    for (i = 0; i < 4; ++i) {
-        for (j = 0; j < 5; ++j) {
-            inWF[i][j] = (short) (inW[i][j] * SCALER);
-        }
-    }
-
-    for (i = 0; i < 4; ++i) {
-        for (j = 0; j < 5; ++j) {
-            for (t = 0; t < 5; ++t) {
-                intWF[i][j][t] = (short) (intW[i][j][t] * SCALER);
+            g_state[j] = (inW[3][j] * input[t]) >> 15;
+            for (i = 0; i < 5; ++i) {
+                g_state[j] += ((h_state[i] * intW[3][j][i]) >> 12);
             }
-        }
-    }
-
-    for (i = 0; i < 4; ++i) {
-        for (j = 0; j < 5; ++j) {
-            intBF[i][j] = (short) (intB[i][j] * SCALER);
-        }
-    }
-
-    for (i = 0; i < 5; ++i) {
-        outWF[i] = (short) (outW[i] * SCALER);
-    }
-
-    outBF = (short) (outB * SCALER);
-
-    short h_stateF[5] = {0};
-    short c_stateF[5] = {0};
-    short i_stateF[5] = {0};
-    short f_stateF[5] = {0};
-    short o_stateF[5] = {0};
-    short g_stateF[5] = {0};
-
-    short sampleinput_16b;
-
-    for (t = 0; t < SAMPLE_TEST_LEN; ++t) {
-
-        sampleinput_16b = (short) (input[t] + 120000) * 256 / 1875;
-
-        for (j = 0; j < 5; ++j) {
-            i_stateF[j] = (inWF[0][j] * sampleinput_16b) >> 15;
-            for (i = 0; i < 5; ++i)
-                i_stateF[j] += ((h_stateF[i] * intWF[0][j][i]) >> 12);
-            i_stateF[j] += intBF[0][j];
-            i_stateF[j] = i_stateF[j] >> 5;
-            if (i_stateF[j] >= LUT_SIZE)
-                i_stateF[j] = 4095;
-            else if (i_stateF[j] >= 0)
-                i_stateF[j] = lut_sigmoid[i_stateF[j]];
-            else if (i_stateF[j] > -LUT_SIZE)
-                i_stateF[j] = 4096 - lut_sigmoid[-i_stateF[j]];
+            g_state[j] += intB[3][j];
+            g_state[j] = g_state[j] >> 5;
+            if (g_state[j] >= LUT_SIZE)
+                g_state[j] = 4096;
+            else if (g_state[j] >= 0)
+                g_state[j] = lut_tanh[g_state[j]];
+            else if (g_state[j] > -LUT_SIZE)
+                g_state[j] = -lut_tanh[-g_state[j]];
             else
-                i_stateF[j] = 1;
+                g_state[j] = -4096;
         }
 
         for (j = 0; j < 5; ++j) {
-            f_stateF[j] = (inWF[1][j] * sampleinput_16b) >> 15;
-            for (i = 0; i < 5; ++i)
-                f_stateF[j] += ((h_stateF[i] * intWF[1][j][i]) >> 12);
-            f_stateF[j] += intBF[1][j];
-            f_stateF[j] = f_stateF[j] >> 5;
-            if (f_stateF[j] >= LUT_SIZE)
-                f_stateF[j] = 4095;
-            else if (f_stateF[j] >= 0)
-                f_stateF[j] = lut_sigmoid[f_stateF[j]];
-            else if (f_stateF[j] > -LUT_SIZE)
-                f_stateF[j] = 4096 - lut_sigmoid[-f_stateF[j]];
+            
+            c_state[j] = (((c_state[j] * f_state[j]) >> 8) + ((g_state[j] * i_state[j]) >> 12)) >> 4;
+            h_state[j] = c_state[j] >> 1;
+            if (h_state[j] >= LUT_SIZE)
+                h_state[j] = 4096;
+            else if (h_state[j] >= 0)
+                h_state[j] = lut_tanh[h_state[j]];
+            else if (h_state[j] > -LUT_SIZE)
+                h_state[j] = -lut_tanh[-h_state[j]];
             else
-                f_stateF[j] = 1;
+                h_state[j] = -4096;
+            h_state[j] = (h_state[j] * o_state[j]) >> 12;
         }
 
-        for (j = 0; j < 5; ++j) {
-            o_stateF[j] = (inWF[2][j] * sampleinput_16b) >> 15;
-            for (i = 0; i < 5; ++i)
-                o_stateF[j] += ((h_stateF[i] * intWF[2][j][i]) >> 12);
-            o_stateF[j] += intBF[2][j];
-            o_stateF[j] = o_stateF[j] >> 5;
-            if (o_stateF[j] >= LUT_SIZE)
-                o_stateF[j] = 4095;
-            else if (o_stateF[j] >= 0)
-                o_stateF[j] = lut_sigmoid[o_stateF[j]];
-            else if (o_stateF[j] > -LUT_SIZE)
-                o_stateF[j] = 4096 - lut_sigmoid[-o_stateF[j]];
-            else
-                o_stateF[j] = 1;
-        }
-
-        for (j = 0; j < 5; ++j) {
-            g_stateF[j] = (inWF[3][j] * sampleinput_16b) >> 15;
-            for (i = 0; i < 5; ++i)
-                g_stateF[j] += ((h_stateF[i] * intWF[3][j][i]) >> 12);
-            g_stateF[j] += intBF[3][j];
-            g_stateF[j] = g_stateF[j] >> 5;
-            if (g_stateF[j] >= LUT_SIZE)
-                g_stateF[j] = 4096;
-            else if (g_stateF[j] >= 0)
-                g_stateF[j] = lut_tanh[g_stateF[j]];
-            else if (g_stateF[j] > -LUT_SIZE)
-                g_stateF[j] = -lut_tanh[-g_stateF[j]];
-            else
-                g_stateF[j] = -4096;
-        }
-        
-        for (j = 0; j < 5; ++j) {
-            c_stateF[j] = (((c_stateF[j] * f_stateF[j]) >> 8) + ((g_stateF[j] * i_stateF[j]) >> 12)) >> 4;
-            h_stateF[j] = c_stateF[j] >> 1;
-            if (h_stateF[j] >= LUT_SIZE)
-                h_stateF[j] = 4096;
-            else if (h_stateF[j] >= 0)
-                h_stateF[j] = lut_tanh[h_stateF[j]];
-            else if (h_stateF[j] > -LUT_SIZE)
-                h_stateF[j] = -lut_tanh[-h_stateF[j]];
-            else
-                h_stateF[j] = -4096;
-            h_stateF[j] = (h_stateF[j] * o_stateF[j]) >> 12;
-        }
-
-        output[t] = outBF;
+        output[t] = outB;
         for (j = 0; j < 5; ++j)
-            output[t] += ((h_stateF[j] * outWF[j]) >> 12);
+            output[t] += ((h_state[j] * outW[j]) >> 12);
     }
 
     return;
@@ -621,43 +377,152 @@ void lstm_n5_o2(
 
 int main() {
 
-    int i;
+    int i, j, k;
     FILE *ifp, *ofp;
 
     struct timeval t1, t2, tr;
 
-    int sampleinput[SAMPLE_TEST_LEN];
-    short test_out1[SAMPLE_TEST_LEN];
-    short test_out2[SAMPLE_TEST_LEN];
+    float sampleinput[SAMPLE_TEST_LEN];
+    float infer_out1[SAMPLE_TEST_LEN];
+    float infer_out2[SAMPLE_TEST_LEN];
 
-    // Read in sample input from "converted-lstm-in.txt" file
-    if (!(ifp = fopen("converted-lstm-in.txt", "r"))) {
-        printf("File converted-lstm-in.txt cannot be opened for read.\n");
+    short sampleinputF[SAMPLE_TEST_LEN];
+    short infer_out1F[SAMPLE_TEST_LEN];
+    short infer_out2F[SAMPLE_TEST_LEN];
+
+    int inW[4][5];
+    int intW[4][5][5];
+    int intB[4][5];
+    int outW[5];
+    int outB;
+
+    const char* work_path = "./";
+    const char* input_filename = "input.hpp";
+    const char* weight1_filename = "weight_1.hpp";
+    const char* weight2_filename = "weight_2.hpp";
+    const char* result1_filename = "fixed_infer_result_1.hpp";
+    const char* result2_filename = "fixed_infer_result_2.hpp";
+
+    char file_name[100];
+
+    float weightVal;
+
+    sprintf(file_name, "%s/%s", work_path, input_filename);
+    // Read in sample input from "input.hpp" file
+    if (!(ifp = fopen(file_name, "r"))) {
+        printf("File %s cannot be opened for read.\n", input_filename);
         return -1;
     }
 
     for (i = 0; i < SAMPLE_TEST_LEN; ++i) {
-        fscanf(ifp, "%d", &sampleinput[i]);
+        fscanf(ifp, "%f", &sampleinput[i]);
+        sampleinputF[i] = (short) (sampleinput[i] * 32768);
     }
     fclose(ifp);
 
-    // Open output.txt for output data write back.
-    if (!(ofp = fopen("output.txt", "w"))) {
-        printf("File output.txt cannot be opened for write.\n");
+    // Load weights and perform inference for LSTM 1.
+    sprintf(file_name, "%s/%s", work_path, weight1_filename);
+    // Read in LSTM 1 weights from "weight_1.hpp" file
+    if (!(ifp = fopen(file_name, "r"))) {
+        printf("File %s cannot be opened for read.\n", weight1_filename);
         return -1;
     }
+    for (j = 0; j < 4; ++j) {
+        for (i = 0; i < 5; ++i) {
+            fscanf(ifp, "%f", &weightVal);
+            inW[j][i] = (int) (weightVal * SCALER);
+        }
+    }
+    for (k = 0; k < 4; ++k) {
+        for (j = 0; j < 5; ++j) {
+            for (i = 0; i < 5; ++i) {
+                fscanf(ifp, "%f", &weightVal);
+                intW[k][j][i] = (int) (weightVal * SCALER); 
+            }
+        }
+    }   
+    for (j = 0; j < 4; ++j) {
+        for (i = 0; i < 5; ++i) {
+            fscanf(ifp, "%f", &weightVal);
+            intB[j][i] = (int) (weightVal * SCALER);
+        }
+    }
+    for (i = 0; i < 5; ++i) {
+        fscanf(ifp, "%f", &weightVal);
+        outW[i] = (int) (weightVal * SCALER);
+    }
+    fscanf(ifp, "%f", &weightVal);
+    outB = (int) (weightVal * SCALER);
+    fclose(ifp);
 
     gettimeofday(&t1, NULL);
-    for (i = 0; i < 50000; ++i) {
-        lstm_n5_o1(sampleinput, test_out1);
-        lstm_n5_o2(sampleinput, test_out2);
-    }
+
+    lstm_n5(sampleinputF, inW, intW, intB, outW, outB, infer_out1F); 
+
     gettimeofday(&t2, NULL);
     timersub(&t1, &t2, &tr);
     printf("Execute time: %.2f sec\n", -tr.tv_sec-(double)tr.tv_usec/1000000.0);
 
-    for (i = 0; i < SAMPLE_TEST_LEN; ++i)
-        fprintf(ofp, "%d,%d\n", test_out1[i], test_out2[i]);
+    sprintf(file_name, "%s/%s", work_path, result1_filename);
+    // Open fixed_infer_result_1.hpp for output data write back.
+    if (!(ofp = fopen(file_name, "w"))) {
+        printf("File %s cannot be opened for write.\n", result1_filename);
+        return -1;
+    }
+    for (i = 0; i < SAMPLE_TEST_LEN; ++i) {
+        infer_out1[i] = infer_out1F[i] / (float) SCALER;
+        fprintf(ofp, "%f\n", infer_out1[i]);
+    }
+    fclose(ofp);
+
+    // Load weights and perform inference for LSTM 2.
+    sprintf(file_name, "%s/%s", work_path, weight2_filename);
+    // Read in LSTM 2 weights from "weight_2.hpp" file
+    if (!(ifp = fopen(file_name, "r"))) {
+        printf("File %s cannot be opened for read.\n", weight2_filename);
+        return -1;
+    }
+    for (j = 0; j < 4; ++j) {
+        for (i = 0; i < 5; ++i) {
+            fscanf(ifp, "%f", &weightVal);
+            inW[j][i] = (short) (weightVal * SCALER);
+        }
+    }
+    for (k = 0; k < 4; ++k) {
+        for (j = 0; j < 5; ++j) {
+            for (i = 0; i < 5; ++i) {
+                fscanf(ifp, "%f", &weightVal);
+                intW[k][j][i] = (short) (weightVal * SCALER); 
+            }
+        }
+    }   
+    for (j = 0; j < 4; ++j) {
+        for (i = 0; i < 5; ++i) {
+            fscanf(ifp, "%f", &weightVal);
+            intB[j][i] = (short) (weightVal * SCALER);
+        }
+    }
+    for (i = 0; i < 5; ++i) {
+        fscanf(ifp, "%f", &weightVal);
+        outW[i] = (short) (weightVal * SCALER);
+    }
+    fscanf(ifp, "%f", &weightVal);
+    outB = (short) (weightVal * SCALER);
+    fclose(ifp);
+
+    lstm_n5(sampleinputF, inW, intW, intB, outW, outB, infer_out2F); 
+
+    sprintf(file_name, "%s/%s", work_path, result2_filename);
+    // Open fixed_infer_result_2.hpp for output data write back.
+    if (!(ofp = fopen(file_name, "w"))) {
+        printf("File %s cannot be opened for write.\n", result2_filename);
+        return -1;
+    }
+    for (i = 0; i < SAMPLE_TEST_LEN; ++i) {
+        infer_out2[i] = infer_out2F[i] / (float) SCALER;
+        fprintf(ofp, "%f\n", infer_out2[i]);
+    }
+    fclose(ofp);
 
     printf("Processing complete.\n");
     return 0;

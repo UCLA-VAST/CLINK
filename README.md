@@ -11,7 +11,7 @@ The idea and its implementation across platforms (especially on FPGA)can be exte
 
 The C simulation is based on the test bench of EEG sampling sequence. Two benchmarks have been provided, corresponding to 16-bit fixed-point and 32-bit floating point data types, respectively.
 
-The fixed-point CLINK kernel is implemented by Vivado HLS, and it is a ready-to-use acceleration kernel that can run on the FPGA.
+The fixed-point CLINK kernel is implemented by Vivado HLS, and it is an acceleration kernel that can run on the FPGA.
 
 The Vivado HLS kernel is time multiplexed by 16 slices, so that it can be shared among 16 different input EEG channels.
 
